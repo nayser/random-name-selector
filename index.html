@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Name Picker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .add-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .pick-btn {
+            background: #ff6b6b;
+            color: white;
+            width: 100%;
+            font-size: 18px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .pick-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .pick-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .names-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            min-height: 120px;
+        }
+
+        .names-list h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .name-item {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .remove-name {
+            background: none;
+            color: #333;
+            border: none;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 0;
+            width: auto;
+            height: auto;
+            transition: color 0.2s ease;
+        }
+
+        .remove-name:hover {
+            color: #ff4757;
+        }
+
+        .animation-display {
+            text-align: center;
+            margin: 30px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-name {
+            font-size: 3em;
+            font-weight: bold;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            min-width: 250px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.1s ease;
+        }
+
+        .winner {
+            animation: celebration 1s ease-in-out;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #dda0dd);
+            background-size: 600% 600%;
+            animation: celebration 1s ease-in-out, rainbow 2s ease-in-out infinite;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            margin: 30px auto 20px;
+            padding: 15px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .author-link {
+            color: #4ecdc4;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .author-link:hover {
+            color: #45b7d1;
+            text-shadow: 0 0 10px rgba(69, 183, 209, 0.5);
+        }
+
+        /* Confetti Animation Styles */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall linear forwards;
+        }
+
+        .confetti:nth-child(2n) { background: #4ecdc4; }
+        .confetti:nth-child(3n) { background: #45b7d1; }
+        .confetti:nth-child(4n) { background: #96ceb4; }
+        .confetti:nth-child(5n) { background: #ffeaa7; }
+        .confetti:nth-child(6n) { background: #dda0dd; }
+        .confetti:nth-child(7n) { background: #ff9ff3; }
+        .confetti:nth-child(8n) { background: #54a0ff; }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            
+            .current-name {
+                font-size: 1.8em;
+                min-width: 180px;
+                padding: 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            input[type="text"] {
+                padding: 12px;
+                font-size: 16px;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+            
+            .pick-btn {
+                padding: 18px;
+                font-size: 17px;
+            }
+            
+            .names-list {
+                padding: 12px;
+            }
+            
+            .name-item {
+                padding: 6px 12px;
+                margin: 3px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px 10px;
+                margin: 5px;
+                border-radius: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+            
+            .current-name {
+                font-size: 1.5em;
+                min-width: 150px;
+                padding: 12px;
+            }
+            
+            input[type="text"] {
+                padding: 10px;
+                font-size: 15px;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 15px;
+            }
+            
+            .pick-btn {
+                padding: 15px;
+                font-size: 16px;
+                margin-top: 15px;
+            }
+            
+            .names-list {
+                padding: 10px;
+                min-height: 100px;
+            }
+            
+            .name-item {
+                padding: 5px 10px;
+                margin: 2px;
+                font-size: 13px;
+                display: block;
+                margin-bottom: 5px;
+            }
+            
+            .animation-display {
+                margin: 20px 0;
+                min-height: 80px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .container {
+                padding: 40px;
+            }
+            
+            h1 {
+                font-size: 3em;
+                margin-bottom: 40px;
+            }
+            
+            .current-name {
+                font-size: 3.5em;
+                min-width: 300px;
+                padding: 25px;
+            }
+            
+            .input-group {
+                margin-bottom: 20px;
+            }
+            
+            input[type="text"] {
+                padding: 18px;
+                font-size: 17px;
+            }
+            
+            .pick-btn {
+                padding: 25px;
+                font-size: 20px;
+                margin-top: 25px;
+            }
+            
+            .names-list {
+                padding: 20px;
+                margin-bottom: 25px;
+            }
+            
+            .footer {
+                margin-top: 40px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Name Picker</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="nameInput" placeholder="Enter a name..." maxlength="50">
+                <button class="add-btn" onclick="addName()">Add Name</button>
+            </div>
+        </div>
+
+        <div class="names-list">
+            <h3>Names in the Draw (<span id="nameCount">0</span>)</h3>
+            <div id="namesList">
+                <div class="empty-state">No names added yet. Add some names to get started!</div>
+            </div>
+        </div>
+
+        <div class="animation-display">
+            <div id="displayName" class="current-name" style="display: none;">Ready to pick!</div>
+        </div>
+
+        <button class="pick-btn" id="pickBtn" onclick="startPicking()" disabled>🎲 Pick a Name!</button>
+    </div>
+    
+    <div class="footer">
+        <p>Made with ❤️ by <a href="https://github.com/nayser" target="_blank" class="author-link">Nayser</a></p>
+    </div>
+
+    <script>
+        let names = [];
+        let isAnimating = false;
+        
+        // Audio context for sound effects
+        let audioContext;
+        let sounds = {};
+
+        // Initialize audio on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                createSounds();
+            }
+        }
+
+        // Create sound effects using Web Audio API
+        function createSounds() {
+            // Randomization tick sound
+            sounds.tick = createBeepSound(800, 0.05, 'square');
+            // Victory sound
+            sounds.victory = createVictorySound();
+        }
+
+        function createBeepSound(frequency, duration, type = 'sine') {
+            return () => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            };
+        }
+
+        function createVictorySound() {
+            return () => {
+                // Play a sequence of notes for victory fanfare
+                const notes = [523, 659, 784, 1047]; // C, E, G, C (higher octave)
+                const noteDuration = 0.15;
+                
+                notes.forEach((frequency, index) => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = frequency;
+                        oscillator.type = 'triangle';
+                        
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + noteDuration);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + noteDuration);
+                    }, index * 100);
+                });
+            };
+        }
+
+        function playSound(soundName) {
+            if (audioContext && sounds[soundName]) {
+                sounds[soundName]();
+            }
+        }
+
+        // Confetti animation function
+        function createConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            // Create 50 confetti pieces
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random horizontal position
+                confetti.style.left = Math.random() * 100 + '%';
+                
+                // Random animation duration (2-4 seconds)
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                
+                // Random delay (0-1 second)
+                confetti.style.animationDelay = Math.random() + 's';
+                
+                container.appendChild(confetti);
+            }
+
+            // Remove confetti after animation
+            setTimeout(() => {
+                document.body.removeChild(container);
+            }, 5000);
+        }
+
+        function addName() {
+            initAudio(); // Initialize audio on first interaction
+            
+            const input = document.getElementById('nameInput');
+            const name = input.value.trim();
+            
+            if (name && !names.includes(name)) {
+                names.push(name);
+                input.value = '';
+                updateNamesList();
+                updatePickButton();
+            } else if (names.includes(name)) {
+                alert('This name is already in the list!');
+            }
+        }
+
+        function removeName(name) {
+            names = names.filter(n => n !== name);
+            updateNamesList();
+            updatePickButton();
+            
+            // Hide display if no names left
+            if (names.length === 0) {
+                document.getElementById('displayName').style.display = 'none';
+            }
+        }
+
+        function updateNamesList() {
+            const namesList = document.getElementById('namesList');
+            const nameCount = document.getElementById('nameCount');
+            
+            nameCount.textContent = names.length;
+            
+            if (names.length === 0) {
+                namesList.innerHTML = '<div class="empty-state">No names added yet. Add some names to get started!</div>';
+            } else {
+                namesList.innerHTML = names.map(name => 
+                    `<span class="name-item">${name}<button class="remove-name" onclick="removeName('${name}')">×</button></span>`
+                ).join('');
+            }
+        }
+
+        function updatePickButton() {
+            const pickBtn = document.getElementById('pickBtn');
+            pickBtn.disabled = names.length < 2 || isAnimating;
+        }
+
+        function startPicking() {
+            if (names.length < 2 || isAnimating) return;
+            
+            initAudio(); // Ensure audio is ready
+            
+            isAnimating = true;
+            updatePickButton();
+            
+            const display = document.getElementById('displayName');
+            display.style.display = 'block';
+            display.classList.remove('winner');
+            
+            let currentIndex = 0;
+            let speed = 50; // Start fast
+            let iterations = 0;
+            const totalIterations = 30 + Math.floor(Math.random() * 20); // Random between 30-50
+            
+            function animate() {
+                display.textContent = names[currentIndex];
+                currentIndex = (currentIndex + 1) % names.length;
+                iterations++;
+                
+                // Play tick sound during animation
+                playSound('tick');
+                
+                // Gradually slow down
+                if (iterations > totalIterations * 0.7) {
+                    speed += 20;
+                }
+                
+                if (iterations < totalIterations) {
+                    setTimeout(animate, speed);
+                } else {
+                    // Final selection
+                    const winner = names[Math.floor(Math.random() * names.length)];
+                    display.textContent = winner;
+                    display.classList.add('winner');
+                    
+                    // Play victory sound and show confetti
+                    setTimeout(() => {
+                        playSound('victory');
+                        createConfetti(); // Show confetti animation
+                    }, 200);
+                    
+                    // Reset after animation
+                    setTimeout(() => {
+                        isAnimating = false;
+                        updatePickButton();
+                    }, 2000);
+                }
+            }
+            
+            animate();
+        }
+
+        // Allow Enter key to add names
+        document.getElementById('nameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addName();
+            }
+        });
+
+        // Initialize
+        updateNamesList();
+        updatePickButton();
+    </script>
+</body>
+</html>
