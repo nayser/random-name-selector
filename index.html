@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Name Selector -  By Nayser</title>
+    <title>Random Name Selector - By Nayser</title>
     
    <!-- Favicon for address bar icon -->
 <link rel="icon" href="favicon.png" type="image/png">
@@ -17,7 +17,7 @@
 
 <!-- Twitter Card meta tags (for X/Twitter sharing) -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Random Name Selector -  By Nayser">
+<meta name="twitter:title" content="Random Name Selector - By Nayser">
 <meta name="twitter:description" content="Pick random names with exciting animations and sound effects! Perfect for games, contests, and decisions.">
 <meta name="twitter:image" content="https://nayser.github.io/random-name-selector/og-image.jpg">
     
@@ -452,8 +452,17 @@
         // Initialize audio on first user interaction
         function initAudio() {
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                createSounds();
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // Resume audio context if it's suspended
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    createSounds();
+                    console.log('Audio initialized successfully');
+                } catch (error) {
+                    console.log('Audio initialization failed:', error);
+                }
             }
         }
 
@@ -463,24 +472,32 @@
             sounds.tick = createBeepSound(800, 0.05, 'square');
             // Victory sound
             sounds.victory = createVictorySound();
+            // Add name sound - pleasant "pop" sound
+            sounds.addName = createBeepSound(600, 0.1, 'sine');
         }
 
         function createBeepSound(frequency, duration, type = 'sine') {
             return () => {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+                if (!audioContext) return;
                 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = frequency;
-                oscillator.type = type;
-                
-                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + duration);
+                try {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = type;
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + duration);
+                } catch (error) {
+                    console.log('Audio playback failed:', error);
+                }
             };
         }
 
@@ -547,16 +564,23 @@
         }
 
         function addName() {
-            initAudio(); // Initialize audio on first interaction
-            
             const input = document.getElementById('nameInput');
             const name = input.value.trim();
             
             if (name && !names.includes(name)) {
+                // Initialize audio first
+                initAudio();
+                
                 names.push(name);
                 input.value = '';
                 updateNamesList();
                 updatePickButton();
+                
+                // Play add name sound with a small delay to ensure audio context is ready
+                setTimeout(() => {
+                    playSound('addName');
+                }, 50);
+                
             } else if (names.includes(name)) {
                 alert('This name is already in the list!');
             }
